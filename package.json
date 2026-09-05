@@ -1,0 +1,51 @@
+{
+  "name": "koishi-plugin-neko-status",
+  "description": "超超超超超可爱的系统状态查询插件喵~ 移植自 neko-status-plugin",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "resources"
+  ],
+  "license": "AGPL-3.0",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf lib"
+  },
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin",
+    "status",
+    "neko",
+    "系统状态",
+    "状态"
+  ],
+  "koishi": {
+    "description": {
+      "zh": "超超超超超可爱的系统状态查询插件喵~ 支持自定义头图、模板和自定义展示内容",
+      "en": "A super cute system status panel with customizable header image, templates and custom entries"
+    },
+    "service": {
+      "required": [
+        "puppeteer"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "koishi": "^4.18.0"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.6.3",
+    "systeminformation": "^5.23.0"
+  },
+  "devDependencies": {
+    "@koishijs/plugin-mock": "^2.6.6",
+    "@types/node": "^26.4.1",
+    "esbuild-register": "^3.6.0",
+    "koishi": "^4.18.0",
+    "koishi-plugin-puppeteer": "^3.9.0",
+    "typescript": "^5.4.0"
+  }
+}
