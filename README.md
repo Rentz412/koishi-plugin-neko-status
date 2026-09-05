@@ -64,6 +64,8 @@ yarn add koishi-plugin-neko-status
 | `infoItems` | 内置条目 | 信息区（虚线框内）的展示条目，见下文 |
 | `autoHideMissing` | `false` | 获取不到信息时自动隐藏对应行（默认显示 `The Emperor's New XXX` 占位） |
 | `customTimeout` | `5000` | 自定义命令的超时（毫秒） |
+| `format` | `png` | 输出图片格式：`png`（无损）/ `jpeg`（有损，体积小）/ `webp`（体积更小，部分平台可能不支持） |
+| `quality` | `90` | JPEG / WebP 的压缩质量 (1-100)，仅对有损格式生效 |
 
 ## 信息区展示
 

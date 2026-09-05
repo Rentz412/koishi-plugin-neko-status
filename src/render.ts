@@ -58,6 +58,10 @@ export interface RenderOptions {
   /** 截图目标，默认整个面板 */
   selector?: string
   width?: number
+  /** 输出格式，默认 png */
+  format?: 'png' | 'jpeg' | 'webp'
+  /** jpeg / webp 的压缩质量 (1-100)，png 忽略此参数 */
+  quality?: number
 }
 
 /**
@@ -88,7 +92,16 @@ export async function renderStatusImage(ctx: Context, options: RenderOptions): P
     await page.evaluate(() => (document as any).fonts?.ready)
     const target: ElementHandle | null = await page.$(options.selector ?? '#app')
     if (!target) throw new Error('模板中缺少 #app 元素')
-    const shot = await target.screenshot({ type: 'png' })
+    const format = options.format ?? 'png'
+    // jpeg 不支持透明，补白底避免透明区域变黑。
+    // 注意只能设在 body 上：__cover 是 z-index:-2 的子元素，会渲染在 #app 的背景色之下
+    if (format === 'jpeg') await page.evaluate(() => {
+      document.body.style.backgroundColor = '#fff'
+    })
+    const shot = await target.screenshot({
+      type: format,
+      ...(format !== 'png' ? { quality: options.quality ?? 90 } : {}),
+    })
     return Buffer.from(shot)
   } finally {
     await page.close().catch(() => {})

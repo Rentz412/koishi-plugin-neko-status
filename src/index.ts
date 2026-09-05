@@ -48,6 +48,8 @@ export interface Config {
   infoItems: InfoItemEntry[]
   autoHideMissing: boolean
   customTimeout: number
+  format: 'png' | 'jpeg' | 'webp'
+  quality: number
 }
 
 const itemType = Schema.union([
@@ -113,6 +115,14 @@ export const Config: Schema<Config> = Schema.intersect([
     autoHideMissing: Schema.boolean().default(false).description('获取不到信息时自动隐藏对应行（默认显示 The Emperor\'s New XXX 占位）。'),
     customTimeout: Schema.number().min(500).default(5000).description('自定义命令的超时时间 (毫秒)。'),
   }).description('信息区展示'),
+  Schema.object({
+    format: Schema.union([
+      Schema.const('png').description('PNG（无损，体积大）'),
+      Schema.const('jpeg').description('JPEG（有损，体积小）'),
+      Schema.const('webp').description('WebP（有损，体积更小，部分平台可能不支持）'),
+    ]).default('png').description('输出图片格式。'),
+    quality: Schema.number().min(1).max(100).step(1).default(90).role('slider').description('JPEG / WebP 的压缩质量，仅对有损格式生效。'),
+  }).description('截图设置'),
 ])
 
 function templateOptions() {
@@ -191,8 +201,13 @@ export function apply(ctx: Context, config: Config) {
       if (!session) return
       try {
         const data = await collect(session)
-        const image = await renderStatusImage(ctx, { template: config.template, data })
-        return h.image(image, 'image/png')
+        const image = await renderStatusImage(ctx, {
+          template: config.template,
+          data,
+          format: config.format,
+          quality: config.quality,
+        })
+        return h.image(image, `image/${config.format}`)
       } catch (error) {
         logger.error('渲染状态面板失败:', error)
         return `状态面板渲染失败：${(error as Error)?.message ?? error}`
