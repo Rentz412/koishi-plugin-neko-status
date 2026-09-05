@@ -1,3 +1,5 @@
+![koishi-plugin-neko-status](https://socialify.git.ci/Rentz412/koishi-plugin-neko-status/image?forks=1&issues=1&language=1&name=1&owner=1&pattern=Plus&pulls=1&stargazers=1&theme=Dark)
+
 # koishi-plugin-neko-status 🍙
 
 [![npm](https://img.shields.io/npm/v/koishi-plugin-neko-status?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-neko-status)
@@ -6,6 +8,12 @@
 
 移植自 Yunzai 的 [neko-status-plugin](https://github.com/erzaozi/neko-status-plugin)（其设计又源自 Koishi 的 [status-pro](https://github.com/Kabuda-czh/koishi-plugin-status-pro)），保留了原版精简、美观、超超超超超可爱的 UI，并且可以自定义头图喵~
 
+## 效果图
+
+<img height="500" alt="ex1" src="https://github.com/user-attachments/assets/d1a4af89-8833-4cb9-978b-3b214e2baa27" />
+<img height="500" alt="ex2" src="https://github.com/user-attachments/assets/bd30d21a-09e7-4c5a-b8cb-ea36275ae3b6" />
+
+
 ## 安装
 
 在插件市场搜索 `neko-status` 安装，或：
@@ -13,6 +21,8 @@
 ```sh
 npm i koishi-plugin-neko-status
 ```
+
+如使用`yarn`，则：
 
 ```sh
 yarn add koishi-plugin-neko-status
