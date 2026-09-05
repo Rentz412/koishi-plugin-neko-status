@@ -56,7 +56,7 @@ yarn add koishi-plugin-neko-status
 | `authority` | `1` | 查看面板所需权限 |
 | `adminAuthority` | `3` | 修改头图 / 模板所需权限 |
 | `template` | `default` | 使用的模板 |
-| `headImage` | `https://t.alcy.cc/pc` | 头图地址，支持网络链接、本地路径或 data URL |
+| `headImage` | `https://t.mwm.moe/pc/` | 头图地址，支持网络链接、本地路径或 data URL |
 | `botName` | 空 | 面板上显示的名称，留空使用账号昵称 |
 | `botBadge` | `Koishi` | 名称旁徽标里的文字 |
 | `badgeIcon` | `true` | 是否显示徽标里的图标 |

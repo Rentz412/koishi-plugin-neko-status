@@ -101,7 +101,7 @@ export const Config: Schema<Config> = Schema.intersect([
   }).description('指令设置'),
   Schema.object({
     template: Schema.union(templateOptions()).default('default').description('使用的模板。'),
-    headImage: Schema.string().role('link').default('https://t.alcy.cc/pc').description('头图地址，支持网络链接、本地路径或 data URL。'),
+    headImage: Schema.string().role('link').default('https://t.mwm.moe/pc/').description('头图地址，支持网络链接、本地路径或 data URL。'),
     botName: Schema.string().default('').description('面板上显示的机器人名称，留空则使用账号昵称。'),
     botBadge: Schema.string().default('Koishi').description('名称旁边跑道形徽标里的文字。'),
     footerIcon: Schema.union([
