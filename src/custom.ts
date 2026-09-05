@@ -1,15 +1,18 @@
 import { exec } from 'node:child_process'
 import iconv from 'iconv-lite'
 import { Logger } from 'koishi'
+import type { InfoItem } from './system'
+import { truncate } from './utils'
 
 export interface CustomEntry {
+  type?: string
   name: string
   command: string
+  disabled?: boolean
 }
 
-export interface CustomResult {
-  name: string
-  stdout: string
+export function toInfoItem(entry: CustomEntry, stdout: string): InfoItem {
+  return { key: entry.name, value: truncate(stdout, 36) }
 }
 
 const isWindows = process.platform === 'win32'
@@ -43,17 +46,19 @@ function run(command: string, cwd: string, timeout: number): Promise<string> {
   })
 }
 
+/**
+ * 结果数组与传入条目按下标一一对应（无效条目占位为空结果），
+ * 这样调用方不需要再做匹配。
+ */
 export async function runCustomEntries(
   entries: CustomEntry[],
   cwd: string,
   timeout: number,
   logger: Logger,
-): Promise<CustomResult[]> {
-  return Promise.all(entries
-    .filter((entry) => entry?.name && entry?.command)
-    .map(async ({ name, command }) => {
-      logger.debug(`执行自定义命令 [${name}]: ${command}`)
-      const stdout = await run(command, cwd, timeout)
-      return { name, stdout }
-    }))
+): Promise<InfoItem[]> {
+  return Promise.all(entries.map((entry) => {
+    if (!entry.name || !entry.command) return { key: '', value: '' }
+    logger.debug(`执行自定义命令 [${entry.name}]: ${entry.command}`)
+    return run(entry.command, cwd, timeout).then((stdout) => toInfoItem(entry, stdout))
+  }))
 }

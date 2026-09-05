@@ -133,19 +133,20 @@ export class SystemCollector {
     }
   }
 
+  /** 取不到硬件信息时 value 为空串，由调用方决定显示占位文字还是隐藏 */
   async cpuInfo(): Promise<InfoItem> {
     const stat = await this.getStatic().catch(() => undefined)
-    return { key: 'CPU', value: truncate(stat?.cpuModel || "The Emperor's New CPU") }
+    return { key: 'CPU', value: truncate(stat?.cpuModel || '') }
   }
 
   async systemInfo(): Promise<InfoItem> {
     const stat = await this.getStatic().catch(() => undefined)
-    return { key: 'System', value: truncate(stat?.distro || "The Emperor's New System") }
+    return { key: 'System', value: truncate(stat?.distro || '') }
   }
 
   async gpuInfo(): Promise<InfoItem> {
     const stat = await this.getStatic().catch(() => undefined)
-    return { key: 'GPU', value: truncate(stat?.gpuModel || "The Emperor's New GPU") }
+    return { key: 'GPU', value: truncate(stat?.gpuModel || '') }
   }
 
   private warn(what: string, error: unknown) {

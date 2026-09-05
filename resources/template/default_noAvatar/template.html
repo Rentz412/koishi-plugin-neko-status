@@ -13,7 +13,7 @@
       <div id="background-page">
         <div class="__title">
           <span class="__title-text" id="config_name">{{data.BotName}}</span>
-          <div class="__title-type" id="bot_version">{{data.BotVersion}}</div>
+          <div class="__title-type" id="bot_version"><img src="{{data.BadgeIcon}}">{{data.BotVersion}}</div>
         </div>
         <ul class="__dashboard" id="config_dashboard">
           <li class="__dashboard-block __cpu" style="--block-color: var(--main-color)">
@@ -59,44 +59,18 @@
         </ul>
         <div id="config_information">
           <ul class="__information">
+            {{each data.Info.items item}}
             <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.cpu.key}}</span>
-              <span class="__information-block__value">{{data.Info.cpu.value}}</span>
-            </li>
-            <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.system.key}}</span>
-              <span class="__information-block__value">{{data.Info.system.value}}</span>
-            </li>
-            <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.gpu.key}}</span>
-              <span class="__information-block__value">{{data.Info.gpu.value}}</span>
-            </li>
-            <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.version.key}}</span>
-              <span class="__information-block__value">{{data.Info.version.value}}</span>
-            </li>
-            <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.plugin.key}}</span>
-              <span class="__information-block__value">{{data.Info.plugin.value}}</span>
-            </li>
-            <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.adapter.key}}</span>
-              <span class="__information-block__value">{{data.Info.adapter.value}}</span>
-            </li>
-            <li class="__information-block">
-              <span class="__information-block__key">{{data.Info.account.key}}</span>
-              <span class="__information-block__value">{{data.Info.account.value}}</span>
-            </li>
-            {{each data.Info.custom custom}}
-            <li class="__information-block">
-              <span class="__information-block__key">{{custom.name}}</span>
-              <span class="__information-block__value">{{custom.stdout}}</span>
+              <span class="__information-block__key">{{item.key}}</span>
+              <span class="__information-block__value">{{item.value}}</span>
             </li>
             {{/each}}
           </ul>
         </div>
-        <p class="__footer" id="config_footer">{{data.Runtime}}</p>
-        <div id="logo"><img src="{{resources}}/assets/image/paw.png">Kawaii Status</div>
+        <div id="footer-row">
+          <div id="logo"><img src="{{data.FooterIcon}}">koishi-plugin-neko-status</div>
+          <p class="__footer" id="config_footer">{{data.Runtime}}</p>
+        </div>
       </div>
     </div>
   </body>

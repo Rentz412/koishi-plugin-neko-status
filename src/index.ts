@@ -1,9 +1,11 @@
 import { Context, h, Schema, Session } from 'koishi'
 import {} from 'koishi-plugin-puppeteer'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { BotCollector } from './bot'
-import { CustomEntry, runCustomEntries } from './custom'
-import { listTemplates, renderStatusImage } from './render'
-import { SystemCollector } from './system'
+import { runCustomEntries } from './custom'
+import { listTemplates, renderStatusImage, templateRoot } from './render'
+import { InfoItem, SystemCollector } from './system'
 import { formatDuration } from './utils'
 
 export const name = 'neko-status'
@@ -16,10 +18,21 @@ export const usage = `
 
 - 发送 \`状态\` 或 \`status\` 查看状态面板
 - 管理员可用 \`更换状态头图 <图片或链接>\`、\`更换状态模板 <模板名>\`、\`状态模板列表\` 在聊天中直接修改配置
-- 「自定义展示」可以执行任意终端命令并把输出显示在面板上，请注意命令安全
+- 「信息区展示」把内置条目和自定义命令放在同一张有序表格里，可以排序、改名、单独开关
+- 自定义命令类型的条目会执行终端命令并把输出显示在面板上，请注意命令安全
 
-> 显示 \`The Emperor's New XXX\` 表示获取不到对应的硬件信息。
+> 显示 \`The Emperor's New XXX\` 表示获取不到对应的硬件信息，可在配置里改为自动隐藏。
 `
+
+export type InfoItemType =
+  | 'cpu' | 'system' | 'gpu' | 'version' | 'plugin' | 'adapter' | 'account' | 'custom'
+
+export interface InfoItemEntry {
+  type: InfoItemType
+  name: string
+  command: string
+  disabled: boolean
+}
 
 export interface Config {
   command: string
@@ -29,9 +42,53 @@ export interface Config {
   template: string
   headImage: string
   botName: string
-  custom: CustomEntry[]
+  botBadge: string
+  footerIcon: 'paw' | 'koishi'
+  badgeIcon: boolean
+  infoItems: InfoItemEntry[]
+  autoHideMissing: boolean
   customTimeout: number
 }
+
+const itemType = Schema.union([
+  Schema.const('cpu').description('CPU'),
+  Schema.const('system').description('System'),
+  Schema.const('gpu').description('GPU'),
+  Schema.const('version').description('Version'),
+  Schema.const('plugin').description('Plugins'),
+  Schema.const('adapter').description('Adapter'),
+  Schema.const('account').description('Account'),
+  Schema.const('custom').description('自定义命令'),
+])
+
+const infoItem = Schema.object({
+  type: itemType.required().description('条目类型。'),
+  name: Schema.string().default('').description('显示名称，留空使用默认。'),
+  command: Schema.string().default('').description('要执行的命令（仅「自定义命令」类型）。'),
+  disabled: Schema.boolean().default(false).description('是否隐藏该条目。'),
+})
+
+/** 这几类取不到真实硬件信息时才有 Emperor's New 占位 */
+const placeholders: Partial<Record<InfoItemType, string>> = {
+  cpu: "The Emperor's New CPU",
+  system: "The Emperor's New System",
+  gpu: "The Emperor's New GPU",
+}
+
+const defaultItems: InfoItemEntry[] = [
+  { type: 'cpu', name: '', command: '', disabled: false },
+  { type: 'system', name: '', command: '', disabled: false },
+  { type: 'gpu', name: '', command: '', disabled: false },
+  { type: 'version', name: '', command: '', disabled: false },
+  { type: 'plugin', name: '', command: '', disabled: false },
+  { type: 'adapter', name: '', command: '', disabled: false },
+  { type: 'account', name: '', command: '', disabled: false },
+]
+
+const footerIcons = {
+  paw: 'assets/image/paw.png',
+  koishi: 'assets/image/logo_pink.png',
+} as const
 
 export const Config: Schema<Config> = Schema.intersect([
   Schema.object({
@@ -42,16 +99,20 @@ export const Config: Schema<Config> = Schema.intersect([
   }).description('指令设置'),
   Schema.object({
     template: Schema.union(templateOptions()).default('default').description('使用的模板。'),
-    headImage: Schema.string().role('link').default('https://t.mwm.moe/pc/').description('头图地址，支持网络链接、本地路径或 data URL。'),
+    headImage: Schema.string().role('link').default('https://t.alcy.cc/pc').description('头图地址，支持网络链接、本地路径或 data URL。'),
     botName: Schema.string().default('').description('面板上显示的机器人名称，留空则使用账号昵称。'),
+    botBadge: Schema.string().default('Koishi').description('名称旁边跑道形徽标里的文字。'),
+    footerIcon: Schema.union([
+      Schema.const('paw').description('猫爪'),
+      Schema.const('koishi').description('Koishi'),
+    ]).default('paw').description('左下角图标。'),
+    badgeIcon: Schema.boolean().default(true).description('是否显示跑道形徽标里的图标。'),
   }).description('外观设置'),
   Schema.object({
-    custom: Schema.array(Schema.object({
-      name: Schema.string().required().description('名称'),
-      command: Schema.string().required().description('命令'),
-    })).role('table').default([]).description('自定义展示项：执行终端命令并把输出显示在面板上。'),
+    infoItems: Schema.array(infoItem).role('table').default(defaultItems).description('信息区（虚线框内）的展示条目，按表格顺序渲染。'),
+    autoHideMissing: Schema.boolean().default(false).description('获取不到信息时自动隐藏对应行（默认显示 The Emperor\'s New XXX 占位）。'),
     customTimeout: Schema.number().min(500).default(5000).description('自定义命令的超时时间 (毫秒)。'),
-  }).description('自定义展示'),
+  }).description('信息区展示'),
 ])
 
 function templateOptions() {
@@ -68,6 +129,7 @@ export function apply(ctx: Context, config: Config) {
 
   const collect = async (session: Session) => {
     const bot = session.bot
+    const customEntries = config.infoItems.filter((e) => e.type === 'custom' && !e.disabled)
     const [cpu, memory, network, disk, cpuInfo, systemInfo, gpuInfo, account, custom, botName, botAvatar, headImage] = await Promise.all([
       system.cpuLoad(),
       system.memory(),
@@ -77,29 +139,50 @@ export function apply(ctx: Context, config: Config) {
       system.systemInfo(),
       system.gpuInfo(),
       bots.accountInfo(bot),
-      runCustomEntries(config.custom, ctx.baseDir, config.customTimeout, logger),
+      runCustomEntries(customEntries, ctx.baseDir, config.customTimeout, logger),
       bots.botName(bot, config.botName),
       bots.botAvatar(bot),
       bots.headImage(config.headImage),
     ])
 
+    const builtins: Record<Exclude<InfoItemType, 'custom'>, InfoItem> = {
+      cpu: cpuInfo,
+      system: systemInfo,
+      gpu: gpuInfo,
+      version: bots.versionInfo(),
+      plugin: bots.pluginInfo(),
+      adapter: bots.adapterInfo(bot),
+      account,
+    }
+
+    // custom 的结果与 customEntries 按下标一一对应
+    let customIndex = 0
+    const items = config.infoItems
+      .filter((entry) => !entry.disabled)
+      .map((entry): InfoItem | undefined => {
+        const item = entry.type === 'custom' ? custom[customIndex++] : builtins[entry.type]
+        let value = item?.value ?? ''
+        // 内置硬件项取不到时显示占位文字，autoHideMissing 开启时则整行隐藏
+        if (!value && placeholders[entry.type]) {
+          if (config.autoHideMissing) return undefined
+          value = placeholders[entry.type]!
+        }
+        if (!item?.key || !value) return undefined
+        return { key: entry.name?.trim() || item.key, value }
+      })
+      .filter((item): item is InfoItem => !!item)
+
     return {
-      BotVersion: 'Koishi',
+      BotVersion: config.botBadge?.trim() || 'Koishi',
       BotAvatar: botAvatar,
       BotName: botName,
       HeadImage: headImage,
       Dashboard: { cpu, memory, network, disk },
-      Info: {
-        cpu: cpuInfo,
-        system: systemInfo,
-        gpu: gpuInfo,
-        version: bots.versionInfo(),
-        plugin: bots.pluginInfo(),
-        adapter: bots.adapterInfo(bot),
-        account,
-        custom,
-      },
+      Info: { items },
       Runtime: `Bot已运行${formatDuration(process.uptime())}`,
+      FooterIcon: `${pathToFileURL(path.join(templateRoot, config.template)).href}/${footerIcons[config.footerIcon] ?? footerIcons.paw}`,
+      // 徽标图标关闭时用透明占位，保持文字位置不动
+      BadgeIcon: config.badgeIcon ? `${pathToFileURL(path.join(templateRoot, config.template)).href}/assets/image/logo_white.png` : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
     }
   }
 

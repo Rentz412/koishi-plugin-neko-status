@@ -41,16 +41,27 @@
 }
 
 #background-page .__title-type {
-  width: 280px;
-  height: 58px;
-  font-size: 35px;
-  line-height: 58px;
+  width: fit-content;
+  height: 56px;
+  font-size: 33px;
+  line-height: 56px;
   color: white;
   text-align: center;
   background-color: #54adff;
   border-radius: 100px;
   margin-left: 20px;
+  padding: 0 22px;
   font-family: "Hinted";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+#background-page .__title-type>img {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 #background-page .__dashboard {
@@ -111,18 +122,32 @@
 }
 
 #background-page .__footer {
-  margin-top: 70px;
   font-family: "HachiMaruPop";
   font-size: 22px;
-  text-align: right;
   color: #b7a89e;
   -webkit-text-stroke: 0.5px #b7a89e;
+}
+
+/* 左下角插件信息与右下角运行时间放在同一行，垂直居中对齐 */
+#footer-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 70px;
+}
+
+#footer-row .__footer {
+  flex: 1;
+  margin-top: 0;
+  text-align: right;
 }
 
 #logo {
   display: flex;
   flex-direction: row;
-  margin-top: -29px;
+  align-items: center;
+  /* 两侧字体基线不同，视觉上略上提让左右文字对齐 */
+  transform: translateY(-4px);
   font-size: 27px;
   font-weight: 550;
   color: #b7a89e;
@@ -131,7 +156,7 @@
 #logo>img {
   width: 38px;
   height: 38px;
-  margin: 0px 10px;
+  margin-right: 10px;
 }
 
 #config_information {

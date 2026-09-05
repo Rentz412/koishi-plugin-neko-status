@@ -14,6 +14,10 @@
 npm i koishi-plugin-neko-status
 ```
 
+```sh
+yarn add koishi-plugin-neko-status
+```
+
 本插件依赖 [koishi-plugin-puppeteer](https://www.npmjs.com/package/koishi-plugin-puppeteer) 提供的 `puppeteer` 服务进行截图，请一并安装并启用。
 
 ## 使用
@@ -41,7 +45,7 @@ npm i koishi-plugin-neko-status
 - [x] 运行时间
 - [x] 自定义头图（网络图片、本地文件、data URL）
 - [x] 多模板（`default` / `default_noAvatar`）
-- [x] 自定义展示
+- [x] 信息区条目统一配置（排序、改名、单独开关）
 
 ## 配置项
 
@@ -52,14 +56,25 @@ npm i koishi-plugin-neko-status
 | `authority` | `1` | 查看面板所需权限 |
 | `adminAuthority` | `3` | 修改头图 / 模板所需权限 |
 | `template` | `default` | 使用的模板 |
-| `headImage` | `https://t.mwm.moe/pc/` | 头图地址，支持网络链接、本地路径或 data URL |
+| `headImage` | `https://t.alcy.cc/pc` | 头图地址，支持网络链接、本地路径或 data URL |
 | `botName` | 空 | 面板上显示的名称，留空使用账号昵称 |
-| `custom` | `[]` | 自定义展示项，见下文 |
+| `botBadge` | `Koishi` | 名称旁徽标里的文字 |
+| `badgeIcon` | `true` | 是否显示徽标里的图标 |
+| `footerIcon` | `paw` | 左下角图标：`paw`（猫爪）/ `koishi`（Koishi 粉色 logo） |
+| `infoItems` | 内置条目 | 信息区（虚线框内）的展示条目，见下文 |
+| `autoHideMissing` | `false` | 获取不到信息时自动隐藏对应行（默认显示 `The Emperor's New XXX` 占位） |
 | `customTimeout` | `5000` | 自定义命令的超时（毫秒） |
 
-## 自定义展示
+## 信息区展示
 
-在「自定义展示」中新增一项，填写 `名称` 和 `命令`，命令的输出会显示在面板的信息区。两个经典例子：
+「信息区展示」把内置条目（CPU / 系统 / GPU / 版本 / 插件 / 适配器 / 账号）和自定义命令条目放在同一张有序表格里：
+
+- **排序**：面板上的渲染顺序就是表格顺序，直接拖动行即可调整；
+- **改名**：`名称` 留空使用默认显示名（如 `CPU`、`Plugins`），填写后覆盖；
+- **开关**：勾选 `隐藏` 可以临时隐藏某一行，不用删除；
+- **自定义命令**：`类型` 选择 `自定义命令` 后填写 `命令`，命令的输出会显示在对应行。
+
+两个经典例子：
 
 <details>
 <summary>展示服务器公网 IP</summary>
@@ -80,12 +95,12 @@ uptime | awk -F'[:,]' '{printf "%.2f%% %.2f%% %.2f%%\n", ($8 * 100) / nproc, ($9
 </details>
 
 > [!NOTE]
-> 此功能会直接在终端执行命令，几乎可以展示任何信息（调用已安装的软件、请求网络 API 等）。请务必避免高风险命令，并先在 Shell / Cmd 中测试输出是否符合预期；输出较长时请自行用 `awk` 等工具整理。
+> 自定义命令会直接在终端执行，几乎可以展示任何信息（调用已安装的软件、请求网络 API 等）。请务必避免高风险命令，并先在 Shell / Cmd 中测试输出是否符合预期；输出较长时请自行用 `awk` 等工具整理。
 
 ## 常见问题
 
 1. 显示 `The Emperor's New XXX` 是什么意思？
-   - 获取不到对应的硬件信息。
+   - 获取不到对应的硬件信息。也可以在配置里开启 `autoHideMissing` 自动隐藏这些行。
 2. 好友 / 群数量显示 `?`
    - 当前平台的适配器没有实现 `getFriendList` / `getGuildList` 接口。
 3. 收发消息数量
